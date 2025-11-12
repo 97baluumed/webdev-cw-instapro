@@ -22,11 +22,11 @@ export function getPosts({ token }) {
       const appPosts = data.posts.map((post) => {
         return {
           idPost: post.id,
-          imageUrlPost: post.imageUtl,
+          imageUrlPost: post.imageUrl,
           date: post.createdAt,
           description: post.description,
           idUser: post.id,
-          name: post.name,
+          name: post.user.name,
           imageUrlUser: post.user.imageUrl,
           likes: post.likes,
           isLiked: post.isLiked,
@@ -35,6 +35,26 @@ export function getPosts({ token }) {
       return appPosts;
     });
 }
+
+export const createPost = ({ description, imageUrl, token }) => {
+  return fetch(postsHost, {
+    method: "POST",
+    headers: {
+      Authorization: token,
+    },
+    body: JSON.stringify({
+      description: description,
+      imageUrl: imageUrl,
+    }),
+  }).then((response) => {
+    if (!response.ok) {
+      return response.json().then((error) => {
+        throw new Error(error.message || "Ошибка при добавлении поста");
+      });
+    }
+    return response.json();
+  });
+};
 
 export function registerUser({ login, password, name, imageUrl }) {
   return fetch(baseHost + "/api/user", {
