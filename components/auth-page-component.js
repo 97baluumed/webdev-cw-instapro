@@ -1,4 +1,4 @@
-import { loginUser, registerUser } from "../api.js";
+import { loginUser, registerUser } from "../modules/api.js";
 import { renderHeaderComponent } from "./header-component.js";
 import { renderUploadImageComponent } from "./upload-image-component.js";
 
