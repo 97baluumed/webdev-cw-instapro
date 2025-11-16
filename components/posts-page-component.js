@@ -1,7 +1,7 @@
 import { USER_POSTS_PAGE } from "../routes.js";
 import { renderHeaderComponent } from "./header-component.js";
 import { posts, goToPage, getToken, user } from "../index.js";
-import { toggleLike, getPosts } from "./api.js";
+import { initLikePosts } from "./initLikePosts.js";
 
 export function renderPostsPageComponent({ appEl }) {
   const appPosts = posts
@@ -65,30 +65,12 @@ export function renderPostsPageComponent({ appEl }) {
     element: document.querySelector(".header-container"),
   });
 
+  setTimeout(initLikePosts, 0);
+
   appEl.addEventListener("click", (event) => {
     const userId = event.target.closest("[data-user-id]")?.dataset.userId;
     if (userId) {
       goToPage(USER_POSTS_PAGE, { userId });
     }
-  });
-
-  appEl.addEventListener("click", (event) => {
-    const likeButton = event.target.closest(".like-button");
-    if (!likeButton || !user) return;
-
-    const postId = likeButton.dataset.postId;
-    const post = posts.find((p) => p.idPost === postId);
-    if (!post) return;
-
-    toggleLike({ postId, token: getToken() })
-      .then(() => getPosts({ token: getToken() }))
-      .then((newPosts) => {
-        posts = newPosts;
-        renderPostsPageComponent({ appEl });
-      })
-      .catch((error) => {
-        console.error("Ошибка при обновлении лайка:", error);
-        alert(error.message || "Не удалось обновить лайк");
-      });
   });
 }

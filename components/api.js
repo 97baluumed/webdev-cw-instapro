@@ -1,6 +1,6 @@
 // Замени на свой, чтобы получить независимый от других набор данных.
 // "боевая" версия инстапро лежит в ключе prod
-const personalKey = "maxim-novozhilov";
+const personalKey = "maxxxim-novozhilov";
 const baseHost = "https://webdev-hw-api.vercel.app";
 const postsHost = `${baseHost}/api/v1/${personalKey}/instapro`;
 
@@ -28,7 +28,10 @@ export function getPosts({ token }) {
           idUser: post.user.id,
           name: post.user.name,
           imageUrlUser: post.user.imageUrl,
-          likes: post.likes,
+          likes: post.likes.reduce((acc, like) => {
+            acc[like.id] = true;
+            return acc;
+          }, {}),
           isLiked: post.isLiked,
         };
       });

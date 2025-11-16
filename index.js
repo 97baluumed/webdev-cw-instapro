@@ -178,7 +178,6 @@ const renderApp = () => {
         </div>
       `;
       });
-
     return;
   }
 };
