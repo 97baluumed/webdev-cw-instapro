@@ -1,10 +1,13 @@
 import { USER_POSTS_PAGE } from "../routes.js";
 import { renderHeaderComponent } from "./header-component.js";
-import { posts, goToPage } from "../index.js";
+import { posts, goToPage, getToken, user } from "../index.js";
+import { toggleLike, getPosts } from "./api.js";
 
 export function renderPostsPageComponent({ appEl }) {
   const appPosts = posts
     .map((post) => {
+      const isLiked = post.isLiked;
+      const likesCount = Object.keys(post.likes).length;
       return `
               <div class="page-container">
                 <div class="header-container"></div>
@@ -21,12 +24,12 @@ export function renderPostsPageComponent({ appEl }) {
                     </div>
                     <div class="post-likes">
                       <button data-post-id="${post.idPost}" class="like-button">
-                        <img src="./assets/images/like-active.svg">
+                        <img src="./assets/images/${
+                          isLiked ? "like-active.svg" : "like-not-active.svg"
+                        }" alt="лайк" />
                       </button>
                       <p class="post-likes-text">
-                        Нравится: <strong>${
-                          Object.keys(post.likes).length
-                        }</strong>
+                        Нравится: <strong>${likesCount}</strong>
                       </p>
                     </div>
                     <p class="post-text">
@@ -69,11 +72,23 @@ export function renderPostsPageComponent({ appEl }) {
     }
   });
 
-  for (let userEl of document.querySelectorAll(".post-header")) {
-    userEl.addEventListener("click", () => {
-      goToPage(USER_POSTS_PAGE, {
-        userId: userEl.dataset.userId,
+  appEl.addEventListener("click", (event) => {
+    const likeButton = event.target.closest(".like-button");
+    if (!likeButton || !user) return;
+
+    const postId = likeButton.dataset.postId;
+    const post = posts.find((p) => p.idPost === postId);
+    if (!post) return;
+
+    toggleLike({ postId, token: getToken() })
+      .then(() => getPosts({ token: getToken() }))
+      .then((newPosts) => {
+        posts = newPosts;
+        renderPostsPageComponent({ appEl });
+      })
+      .catch((error) => {
+        console.error("Ошибка при обновлении лайка:", error);
+        alert(error.message || "Не удалось обновить лайк");
       });
-    });
-  }
+  });
 }

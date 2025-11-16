@@ -100,3 +100,19 @@ export function uploadImage({ file }) {
     return response.json();
   });
 }
+
+export const toggleLike = ({ postId, token }) => {
+  return fetch(`${postsHost}/${postId}/like`, {
+    method: "POST",
+    headers: {
+      Authorization: token,
+    },
+  }).then((res) => {
+    if (!res.ok) {
+      return res.json().then((error) => {
+        throw new Error(error.message || "Ошибка при установке лайка");
+      });
+    }
+    return res.json();
+  });
+};
