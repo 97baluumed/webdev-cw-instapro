@@ -25,7 +25,7 @@ export function getPosts({ token }) {
           imageUrlPost: post.imageUrl,
           date: post.createdAt,
           description: post.description,
-          idUser: post.id,
+          idUser: post.user.id,
           name: post.user.name,
           imageUrlUser: post.user.imageUrl,
           likes: post.likes,

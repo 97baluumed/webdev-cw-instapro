@@ -62,6 +62,13 @@ export function renderPostsPageComponent({ appEl }) {
     element: document.querySelector(".header-container"),
   });
 
+  appEl.addEventListener("click", (event) => {
+    const userId = event.target.closest("[data-user-id]")?.dataset.userId;
+    if (userId) {
+      goToPage(USER_POSTS_PAGE, { userId });
+    }
+  });
+
   for (let userEl of document.querySelectorAll(".post-header")) {
     userEl.addEventListener("click", () => {
       goToPage(USER_POSTS_PAGE, {

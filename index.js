@@ -1,4 +1,4 @@
-import { createPost, getPosts } from "./modules/api.js";
+import { createPost, getPosts } from "./components/api.js";
 import { renderAddPostPageComponent } from "./components/add-post-page-component.js";
 import { renderAuthPageComponent } from "./components/auth-page-component.js";
 import {
@@ -19,6 +19,7 @@ import {
 export let user = getUserFromLocalStorage();
 export let page = null;
 export let posts = [];
+export let data = null;
 
 const getToken = () => {
   const token = user ? `Bearer ${user.token}` : undefined;
@@ -34,7 +35,7 @@ export const logout = () => {
 /**
  * Включает страницу приложения
  */
-export const goToPage = (newPage, data) => {
+export const goToPage = (newPage, pageData) => {
   if (
     [
       POSTS_PAGE,
@@ -66,15 +67,23 @@ export const goToPage = (newPage, data) => {
         });
     }
 
+    // if (newPage === USER_POSTS_PAGE) {
+    //   // @@TODO: реализовать получение постов юзера из API
+    //   //console.log("Открываю страницу пользователя: ", data.userId);
+    //   const userId = data.userId;
+    //   renderLoadingPageComponent({
+    //     appEl,
+    //     user,
+    //     goToPage,
+    //   });
     if (newPage === USER_POSTS_PAGE) {
-      // @@TODO: реализовать получение постов юзера из API
-      console.log("Открываю страницу пользователя: ", data.userId);
       page = USER_POSTS_PAGE;
-      posts = [];
+      data = pageData;
       return renderApp();
     }
 
     page = newPage;
+    data = null;
     renderApp();
 
     return;
@@ -140,9 +149,36 @@ const renderApp = () => {
     });
   }
 
+  // if (page === USER_POSTS_PAGE) {
+  //   // @TODO: реализовать страницу с фотографиями отдельного пользвателя
+  //   appEl.innerHTML = "Здесь будет страница фотографий пользователя";
+  //   return;
+  // }
   if (page === USER_POSTS_PAGE) {
-    // @TODO: реализовать страницу с фотографиями отдельного пользвателя
-    appEl.innerHTML = "Здесь будет страница фотографий пользователя";
+    const userId = data.userId;
+
+    renderLoadingPageComponent({
+      appEl,
+      user,
+      goToPage,
+    });
+
+    getPosts({ token: getToken() })
+      .then((allPosts) => {
+        const userPosts = allPosts.filter((post) => post.idUser === userId);
+        posts = userPosts;
+        renderPostsPageComponent({ appEl });
+      })
+      .catch((error) => {
+        console.error("Ошибка загрузки постов пользователя:", error);
+        appEl.innerHTML = `
+        <div class="page-container">
+          <p>Не удалось загрузить посты пользователя.</p>
+          <button class="button" onclick="goToPage(POSTS_PAGE)">Назад к ленте</button>
+        </div>
+      `;
+      });
+
     return;
   }
 };
