@@ -48,7 +48,7 @@ export function initLikePosts() {
       if (likesCounter) {
         likesCounter.textContent = newLikesCount;
       } else {
-        console.error("❌ Счётчик не найден для поста:", postId);
+        console.error("Счётчик не найден для поста:", postId);
       }
 
       toggleLike({ postId, token: getToken() }).catch((error) => {
