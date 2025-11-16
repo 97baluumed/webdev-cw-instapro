@@ -4,6 +4,18 @@ const personalKey = "maxxxim-novozhilov";
 const baseHost = "https://webdev-hw-api.vercel.app";
 const postsHost = `${baseHost}/api/v1/${personalKey}/instapro`;
 
+function formatDate(dateString) {
+  const date = new Date(dateString);
+
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function getPosts({ token }) {
   return fetch(postsHost, {
     method: "GET",
@@ -23,7 +35,7 @@ export function getPosts({ token }) {
         return {
           idPost: post.id,
           imageUrlPost: post.imageUrl,
-          date: post.createdAt,
+          date: formatDate(post.createdAt),
           description: post.description,
           idUser: post.user.id,
           name: post.user.name,
