@@ -19,6 +19,7 @@ import {
 export let user = getUserFromLocalStorage();
 export let page = null;
 export let posts = [];
+export let allPosts = [];
 export let data = null;
 
 export const getToken = () => {
@@ -52,30 +53,31 @@ export const goToPage = (newPage, pageData) => {
     }
 
     if (newPage === POSTS_PAGE) {
+      if (allPosts.length > 0) {
+        posts = allPosts;
+        page = POSTS_PAGE;
+        renderApp();
+        return;
+      }
+
       page = LOADING_PAGE;
       renderApp();
 
       return getPosts({ token: getToken() })
         .then((newPosts) => {
-          page = POSTS_PAGE;
+          allPosts = newPosts;
           posts = newPosts;
+          page = POSTS_PAGE;
           renderApp();
         })
         .catch((error) => {
           console.error(error);
-          goToPage(POSTS_PAGE);
+          page = POSTS_PAGE;
+          posts = [];
+          renderApp();
         });
     }
 
-    // if (newPage === USER_POSTS_PAGE) {
-    //   // @@TODO: реализовать получение постов юзера из API
-    //   //console.log("Открываю страницу пользователя: ", data.userId);
-    //   const userId = data.userId;
-    //   renderLoadingPageComponent({
-    //     appEl,
-    //     user,
-    //     goToPage,
-    //   });
     if (newPage === USER_POSTS_PAGE) {
       page = USER_POSTS_PAGE;
       data = pageData;
@@ -122,21 +124,18 @@ const renderApp = () => {
         // @TODO: реализовать добавление поста в API
         console.log("Добавляю пост...", { description, imageUrl });
         goToPage(POSTS_PAGE);
-        createPost({
-          description,
-          imageUrl,
-          token: getToken(),
-        })
+        createPost({ description, imageUrl, token: getToken() })
           .then(() => {
             return getPosts({ token: getToken() });
           })
           .then((newPosts) => {
+            allPosts = newPosts;
             posts = newPosts;
             goToPage(POSTS_PAGE);
           })
           .catch((error) => {
             console.error("Ошибка при добавлении поста:", error);
-            alert(`Ошибка: ${error.message || "Не удалось добавить пост"}`);
+            alert(`Ошибка: ${error.message}`);
             goToPage(ADD_POSTS_PAGE);
           });
       },
@@ -149,28 +148,24 @@ const renderApp = () => {
     });
   }
 
-  // if (page === USER_POSTS_PAGE) {
-  //   // @TODO: реализовать страницу с фотографиями отдельного пользвателя
-  //   appEl.innerHTML = "Здесь будет страница фотографий пользователя";
-  //   return;
-  // }
   if (page === USER_POSTS_PAGE) {
     const userId = data.userId;
 
-    renderLoadingPageComponent({
-      appEl,
-      user,
-      goToPage,
-    });
+    if (allPosts.length > 0) {
+      posts = allPosts.filter((post) => post.idUser === userId); // ✅ фильтруем из allPosts
+      renderPostsPageComponent({ appEl });
+      return;
+    }
+
+    renderLoadingPageComponent({ appEl, user, goToPage });
 
     getPosts({ token: getToken() })
-      .then((allPosts) => {
-        const userPosts = allPosts.filter((post) => post.idUser === userId);
-        posts = userPosts;
+      .then((newPosts) => {
+        allPosts = newPosts; // ✅ сохранили
+        posts = newPosts.filter((post) => post.idUser === userId);
         renderPostsPageComponent({ appEl });
       })
       .catch((error) => {
-        console.error("Ошибка загрузки постов пользователя:", error);
         appEl.innerHTML = `
         <div class="page-container">
           <p>Не удалось загрузить посты пользователя.</p>
@@ -178,6 +173,7 @@ const renderApp = () => {
         </div>
       `;
       });
+
     return;
   }
 };

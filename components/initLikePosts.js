@@ -32,7 +32,7 @@ export function initLikePosts() {
         post.isLiked = true;
         post.likes[user._id] = true;
       }
-      console.log(posts[0].likes);
+      //console.log(posts[0].likes);
 
       const newLikesCount = Object.keys(post.likes).length;
 
