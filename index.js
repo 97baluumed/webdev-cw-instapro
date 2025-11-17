@@ -122,7 +122,6 @@ const renderApp = () => {
       appEl,
       onAddPostClick({ description, imageUrl }) {
         // @TODO: реализовать добавление поста в API
-        console.log("Добавляю пост...", { description, imageUrl });
         goToPage(POSTS_PAGE);
         createPost({ description, imageUrl, token: getToken() })
           .then(() => {
@@ -152,7 +151,7 @@ const renderApp = () => {
     const userId = data.userId;
 
     if (allPosts.length > 0) {
-      posts = allPosts.filter((post) => post.idUser === userId); // ✅ фильтруем из allPosts
+      posts = allPosts.filter((post) => post.idUser === userId);
       renderPostsPageComponent({ appEl });
       return;
     }
@@ -161,7 +160,7 @@ const renderApp = () => {
 
     getPosts({ token: getToken() })
       .then((newPosts) => {
-        allPosts = newPosts; // ✅ сохранили
+        allPosts = newPosts;
         posts = newPosts.filter((post) => post.idUser === userId);
         renderPostsPageComponent({ appEl });
       })

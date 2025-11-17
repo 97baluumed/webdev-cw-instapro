@@ -1,5 +1,5 @@
-import { posts, user, getToken } from "../index.js";
-import { toggleLike } from "./api.js";
+import { posts, user, getToken, allPosts } from "../index.js";
+import { getPosts, toggleLike } from "./api.js";
 
 export function initLikePosts() {
   for (const likeButton of document.querySelectorAll(".like-button")) {
@@ -32,7 +32,6 @@ export function initLikePosts() {
         post.isLiked = true;
         post.likes[user._id] = true;
       }
-      //console.log(posts[0].likes);
 
       const newLikesCount = Object.keys(post.likes).length;
 
@@ -51,28 +50,29 @@ export function initLikePosts() {
         console.error("Счётчик не найден для поста:", postId);
       }
 
-      toggleLike({ postId, token: getToken() }).catch((error) => {
-        console.error("Ошибка при лайке:", error);
+      toggleLike({ postId, token: getToken() })
+        .then(() => {})
+        .catch((error) => {
+          console.error("Ошибка при лайке:", error);
 
-        if (wasLiked) {
-          post.isLiked = true;
-          post.likes[user._id] = true;
-        } else {
-          post.isLiked = false;
-          delete post.likes[user._id];
-        }
+          post.isLiked = wasLiked;
+          if (wasLiked) {
+            post.likes[user._id] = true;
+          } else {
+            delete post.likes[user._id];
+          }
 
-        img.src = wasLiked
-          ? "./assets/images/like-active.svg"
-          : "./assets/images/like-not-active.svg";
+          const rollbackCount = Object.keys(post.likes).length;
+          if (likesCounter) {
+            likesCounter.textContent = rollbackCount;
+          }
 
-        const rollbackCount = Object.keys(post.likes).length;
-        if (likesCounter) {
-          likesCounter.textContent = rollbackCount;
-        }
+          img.src = post.isLiked
+            ? "./assets/images/like-active.svg"
+            : "./assets/images/like-not-active.svg";
 
-        alert("Не удалось обновить лайк");
-      });
+          alert("Не удалось обновить лайк");
+        });
     });
   }
 }

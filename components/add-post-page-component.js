@@ -43,13 +43,6 @@ export function renderAddPostPageComponent({ appEl, onAddPostClick }) {
       onImageUrlChange: setPostImageUrl,
     });
 
-    // document.getElementById("add-button").addEventListener("click", () => {
-    //   onAddPostClick({
-    //     description: "Описание картинки",
-    //     imageUrl: "https://image.png",
-    //   });
-    // });
-
     document.getElementById("add-button").addEventListener("click", () => {
       const description = document.getElementById("description-input").value;
 
