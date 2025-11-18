@@ -65,14 +65,6 @@ export function renderPostsPageComponent({ appEl }) {
     element: document.querySelector(".header-container"),
   });
 
-  // setTimeout(initLikePosts, 0);
-
-  // appEl.addEventListener("click", (event) => {
-  //   const userId = event.target.closest("[data-user-id]")?.dataset.userId;
-  //   if (userId) {
-  //     goToPage(USER_POSTS_PAGE, { userId });
-  //   }
-  // });
   setTimeout(() => {
     initLikePosts();
   }, 0);
