@@ -116,18 +116,70 @@ export function uploadImage({ file }) {
   });
 }
 
-export const toggleLike = ({ postId, token }) => {
-  return fetch(`${postsHost}/${postId}/like`, {
+export const toggleLike = ({ postId, token, isLiked }) => {
+  const endpoint = isLiked ? "dislike" : "like";
+
+  return fetch(`${postsHost}/${postId}/${endpoint}`, {
     method: "POST",
     headers: {
       Authorization: token,
     },
-  }).then((res) => {
-    if (!res.ok) {
-      return res.json().then((error) => {
-        throw new Error(error.message || "Ошибка при установке лайка");
-      });
-    }
-    return res.json();
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then((error) => {
+          throw new Error(
+            error.message ||
+              `Ошибка при ${isLiked ? "удалении" : "установке"} лайка`
+          );
+        });
+      }
+      return res.json();
+    })
+    .then((data) => {
+      return {
+        isLiked: data.post.isLiked,
+        likesCount: data.post.likes.length,
+      };
+    });
 };
+
+export function getUserPosts({ userId, token }) {
+  return fetch(`${postsHost}/user-posts/${userId}`, {
+    method: "GET",
+    headers: {
+      Authorization: token,
+    },
+  })
+    .then((response) => {
+      if (response.status === 401) {
+        throw new Error("Нет авторизации");
+      }
+      if (!response.ok) {
+        return response.json().then((error) => {
+          throw new Error(
+            error.message || "Не удалось загрузить посты пользователя"
+          );
+        });
+      }
+      return response.json();
+    })
+    .then((data) => {
+      return data.posts.map((post) => {
+        return {
+          idPost: post.id,
+          imageUrlPost: post.imageUrl,
+          date: formatDate(post.createdAt),
+          description: post.description,
+          idUser: post.user.id,
+          name: post.user.name,
+          imageUrlUser: post.user.imageUrl,
+          likes: post.likes.reduce((acc, like) => {
+            acc[like.id] = true;
+            return acc;
+          }, {}),
+          isLiked: post.isLiked,
+        };
+      });
+    });
+}

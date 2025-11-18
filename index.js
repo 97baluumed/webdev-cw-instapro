@@ -1,4 +1,4 @@
-import { createPost, getPosts } from "./components/api.js";
+import { createPost, getPosts, getUserPosts } from "./components/api.js";
 import { renderAddPostPageComponent } from "./components/add-post-page-component.js";
 import { renderAuthPageComponent } from "./components/auth-page-component.js";
 import {
@@ -15,12 +15,17 @@ import {
   removeUserFromLocalStorage,
   saveUserToLocalStorage,
 } from "./helpers.js";
+import { initLikePosts } from "./components/initLikePosts.js";
 
 export let user = getUserFromLocalStorage();
 export let page = null;
 export let posts = [];
 export let allPosts = [];
 export let data = null;
+export let abortController = null;
+export let currentUserId = null;
+export const userPostsCache = new Map();
+export const USER_POSTS_CACHE_TTL = 30000;
 
 export const getToken = () => {
   const token = user ? `Bearer ${user.token}` : undefined;
@@ -96,12 +101,9 @@ export const goToPage = (newPage, pageData) => {
 
 const renderApp = () => {
   const appEl = document.getElementById("app");
+
   if (page === LOADING_PAGE) {
-    return renderLoadingPageComponent({
-      appEl,
-      user,
-      goToPage,
-    });
+    return renderLoadingPageComponent({ appEl, user, goToPage });
   }
 
   if (page === AUTH_PAGE) {
@@ -121,8 +123,6 @@ const renderApp = () => {
     return renderAddPostPageComponent({
       appEl,
       onAddPostClick({ description, imageUrl }) {
-        // @TODO: реализовать добавление поста в API
-        goToPage(POSTS_PAGE);
         createPost({ description, imageUrl, token: getToken() })
           .then(() => {
             return getPosts({ token: getToken() });
@@ -150,21 +150,42 @@ const renderApp = () => {
   if (page === USER_POSTS_PAGE) {
     const userId = data.userId;
 
-    if (allPosts.length > 0) {
-      posts = allPosts.filter((post) => post.idUser === userId);
+    const cache = userPostsCache.get(userId);
+    const isCacheActual =
+      cache && Date.now() - cache.timestamp < USER_POSTS_CACHE_TTL;
+
+    if (isCacheActual) {
+      posts = cache.posts;
       renderPostsPageComponent({ appEl });
       return;
     }
 
+    if (abortController) {
+      abortController.abort();
+    }
+
+    abortController = new AbortController();
+
     renderLoadingPageComponent({ appEl, user, goToPage });
 
-    getPosts({ token: getToken() })
-      .then((newPosts) => {
-        allPosts = newPosts;
-        posts = newPosts.filter((post) => post.idUser === userId);
-        renderPostsPageComponent({ appEl });
+    getUserPosts({ userId, token: getToken(), signal: abortController.signal })
+      .then((userPosts) => {
+        if (page === USER_POSTS_PAGE && data.userId === userId) {
+          posts = userPosts;
+          userPostsCache.set(userId, {
+            posts: userPosts,
+            timestamp: Date.now(),
+          });
+          renderPostsPageComponent({ appEl });
+        }
       })
       .catch((error) => {
+        if (error.name === "AbortError") {
+          console.log("Запрос отменён");
+          return;
+        }
+
+        console.error("Ошибка загрузки постов пользователя:", error);
         appEl.innerHTML = `
         <div class="page-container">
           <p>Не удалось загрузить посты пользователя.</p>
@@ -178,3 +199,7 @@ const renderApp = () => {
 };
 
 goToPage(POSTS_PAGE);
+
+setTimeout(() => {
+  initLikePosts();
+}, 0);

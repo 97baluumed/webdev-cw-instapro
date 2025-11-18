@@ -1,5 +1,5 @@
-import { posts, user, getToken, allPosts } from "../index.js";
-import { getPosts, toggleLike } from "./api.js";
+import { posts, user, getToken } from "../index.js";
+import { toggleLike } from "./api.js";
 
 export function initLikePosts() {
   for (const likeButton of document.querySelectorAll(".like-button")) {
@@ -25,20 +25,18 @@ export function initLikePosts() {
 
       const wasLiked = post.isLiked;
 
+      post.isLiked = !wasLiked;
       if (wasLiked) {
-        post.isLiked = false;
         delete post.likes[user._id];
       } else {
-        post.isLiked = true;
         post.likes[user._id] = true;
       }
 
       const newLikesCount = Object.keys(post.likes).length;
 
-      const img = likeButton.querySelector("img");
-      img.src = wasLiked
-        ? "./assets/images/like-not-active.svg"
-        : "./assets/images/like-active.svg";
+      img.src = post.isLiked
+        ? "./assets/images/like-active.svg"
+        : "./assets/images/like-not-active.svg";
 
       const likesCounter = likeButton
         .closest(".post")
@@ -46,12 +44,15 @@ export function initLikePosts() {
 
       if (likesCounter) {
         likesCounter.textContent = newLikesCount;
-      } else {
-        console.error("Счётчик не найден для поста:", postId);
       }
 
-      toggleLike({ postId, token: getToken() })
-        .then(() => {})
+      toggleLike({ postId, token: getToken(), isLiked: wasLiked })
+        .then((result) => {
+          post.isLiked = result.isLiked;
+          if (likesCounter) {
+            likesCounter.textContent = result.likesCount;
+          }
+        })
         .catch((error) => {
           console.error("Ошибка при лайке:", error);
 
