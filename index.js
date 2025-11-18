@@ -22,10 +22,6 @@ export let page = null;
 export let posts = [];
 export let allPosts = [];
 export let data = null;
-export let abortController = null;
-export let currentUserId = null;
-export const userPostsCache = new Map();
-export const USER_POSTS_CACHE_TTL = 30000;
 
 export const getToken = () => {
   const token = user ? `Bearer ${user.token}` : undefined;
@@ -150,41 +146,14 @@ const renderApp = () => {
   if (page === USER_POSTS_PAGE) {
     const userId = data.userId;
 
-    const cache = userPostsCache.get(userId);
-    const isCacheActual =
-      cache && Date.now() - cache.timestamp < USER_POSTS_CACHE_TTL;
-
-    if (isCacheActual) {
-      posts = cache.posts;
-      renderPostsPageComponent({ appEl });
-      return;
-    }
-
-    if (abortController) {
-      abortController.abort();
-    }
-
-    abortController = new AbortController();
-
     renderLoadingPageComponent({ appEl, user, goToPage });
 
-    getUserPosts({ userId, token: getToken(), signal: abortController.signal })
+    getUserPosts({ userId, token: getToken() })
       .then((userPosts) => {
-        if (page === USER_POSTS_PAGE && data.userId === userId) {
-          posts = userPosts;
-          userPostsCache.set(userId, {
-            posts: userPosts,
-            timestamp: Date.now(),
-          });
-          renderPostsPageComponent({ appEl });
-        }
+        posts = userPosts;
+        renderPostsPageComponent({ appEl });
       })
       .catch((error) => {
-        if (error.name === "AbortError") {
-          console.log("Запрос отменён");
-          return;
-        }
-
         console.error("Ошибка загрузки постов пользователя:", error);
         appEl.innerHTML = `
         <div class="page-container">
@@ -199,7 +168,3 @@ const renderApp = () => {
 };
 
 goToPage(POSTS_PAGE);
-
-setTimeout(() => {
-  initLikePosts();
-}, 0);
