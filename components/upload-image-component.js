@@ -1,4 +1,4 @@
-import { uploadImage } from "../api.js";
+import { uploadImage } from "./api.js";
 
 /**
  * Компонент загрузки изображения.
@@ -19,7 +19,7 @@ export function renderUploadImageComponent({ element, onImageUrlChange }) {
 
   /**
    * Функция рендеринга компонента.
-   * Отображает интерфейс компонента в зависимости от состояния: 
+   * Отображает интерфейс компонента в зависимости от состояния:
    * либо форма выбора файла, либо превью загруженного изображения с кнопкой замены.
    */
   const render = () => {
@@ -47,7 +47,6 @@ export function renderUploadImageComponent({ element, onImageUrlChange }) {
       </div>
     `;
 
-    // Обработчик выбора файла
     const fileInputElement = element.querySelector(".file-upload-input");
     fileInputElement?.addEventListener("change", () => {
       const file = fileInputElement.files[0];
@@ -55,26 +54,23 @@ export function renderUploadImageComponent({ element, onImageUrlChange }) {
         const labelEl = document.querySelector(".file-upload-label");
         labelEl.setAttribute("disabled", true);
         labelEl.textContent = "Загружаю файл...";
-        
-        // Загружаем изображение с помощью API
+
         uploadImage({ file }).then(({ fileUrl }) => {
-          imageUrl = fileUrl; // Сохраняем URL загруженного изображения
-          onImageUrlChange(imageUrl); // Уведомляем о изменении URL изображения
-          render(); // Перерисовываем компонент с новым состоянием
+          imageUrl = fileUrl;
+          onImageUrlChange(imageUrl);
+          render();
         });
       }
     });
 
-    // Обработчик удаления изображения
     element
       .querySelector(".file-upload-remove-button")
       ?.addEventListener("click", () => {
-        imageUrl = ""; // Сбрасываем URL изображения
-        onImageUrlChange(imageUrl); // Уведомляем об изменении URL изображения
-        render(); // Перерисовываем компонент
+        imageUrl = "";
+        onImageUrlChange(imageUrl);
+        render();
       });
   };
 
-  // Инициализация компонента
   render();
 }
